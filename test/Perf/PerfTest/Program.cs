@@ -1,5 +1,7 @@
 ﻿namespace PerfTest
 {
+	using RabbitMQ.Client.Events;
+	using RabbitMqNext;
 	using System;
 	using System.Collections.Generic;
 	using System.Configuration;
@@ -8,9 +10,8 @@
 	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
-	using RabbitMqNext;
-//	using RabbitMQ.Client;
-//	using RabbitMQ.Client.Events;
+	//	using RabbitMQ.Client;
+	//	using RabbitMQ.Client.Events;
 	using ConnectionFactory = RabbitMqNext.ConnectionFactory;
 
 	public class Program
@@ -19,11 +20,11 @@
 
 		const bool WithAcks = false;
 
-//		const int TotalPublish = 250000;
+		//		const int TotalPublish = 250000;
 		const int TotalPublish = 10;
-//		const int TotalPublish = 100000;
-//		const int TotalPublish = 500000;
-//		const int TotalPublish = 2000000;
+		//		const int TotalPublish = 100000;
+		//		const int TotalPublish = 500000;
+		//		const int TotalPublish = 2000000;
 
 		const int ConcurrentCalls = 100;
 
@@ -40,8 +41,8 @@
 
 		private static byte[] MessageContent = Encoding.UTF8.GetBytes(Message);
 
-	    public static void Main()
-	    {
+		public static void Main()
+		{
 			Console.WriteLine("Is Server GC: " + GCSettings.IsServerGC);
 			GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
 			Console.WriteLine("Compaction mode: " + GCSettings.LargeObjectHeapCompactionMode);
@@ -49,9 +50,9 @@
 			GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
 			Console.WriteLine("New Latency mode: " + GCSettings.LatencyMode);
 
-		    int maxworkers, minworkers;
-		    int maxcomplePorts, mincomplePorts;
-		    ThreadPool.GetMaxThreads(out maxworkers, out maxcomplePorts);
+			int maxworkers, minworkers;
+			int maxcomplePorts, mincomplePorts;
+			ThreadPool.GetMaxThreads(out maxworkers, out maxcomplePorts);
 			ThreadPool.GetMinThreads(out minworkers, out mincomplePorts);
 			Console.WriteLine("I'm the client. The threadpool max " + maxworkers + " min " + minworkers);
 
@@ -59,82 +60,82 @@
 			_username = ConfigurationManager.AppSettings["username"];
 			_password = ConfigurationManager.AppSettings["password"];
 
-//		    SubscribeForGCNotifications();
+			//		    SubscribeForGCNotifications();
 
 			var t = StartRpc(); // StartConcurrentRpc(); // StartOriginalClientRpc(); //StartRpc(); // StartOriginalClient(); // Start();
-		    t.Wait();
+			t.Wait();
 
 			Console.WriteLine("All done");
 
-		    Thread.CurrentThread.Join();
-	    }
+			Thread.CurrentThread.Join();
+		}
 
-//		private static async Task StartConcurrentRpc()
-//		{
-//			Connection conn2 = null;
-//			try
-//			{
-//				conn2 = await new ConnectionFactory().Connect(TargetHost,
-//					vhost: VHost, username: _username, password: _password);
-//
-//				Console.WriteLine("[Connected]");
-//
-//				Console.WriteLine("Starting Rpc Parallel calls...");
-//
-//				var newChannel2 = await conn2.CreateChannel();
-//				Console.WriteLine("[channel created] " + newChannel2.ChannelNumber);
-//				await newChannel2.BasicQos(0, Prefetch, false);
-//
-//				var rpcHelper = await newChannel2.CreateRpcHelper(ConsumeMode.ParallelWithBufferCopy);
-//
-//				var watch = new Stopwatch();
-//				watch.Start();
-//
-//				var totalReceived = 0;
-//
-//				
-//				var tasks = new Task[ConcurrentCalls];
-//
-//				for (int i = 0; i < TotalPublish; i += ConcurrentCalls)
-//				{
-//					for (int j = 0; j < ConcurrentCalls; j++)
-//					{
-//						var t = MakeCall(rpcHelper, i + j);
-//						tasks[j] = t;
-//					}
-//
-//					Task.WaitAll(tasks);
-//
-//					totalReceived += ConcurrentCalls;
-//
-////					Console.WriteLine("calls " + totalReceived);
-//
-//					if (totalReceived >= TotalPublish)
-//					{
-//						watch.Stop();
-//						Console.WriteLine("Rpc stress done. Took " +
-//										  watch.Elapsed.TotalMilliseconds +
-//										  "ms - rate of " + (TotalPublish / watch.Elapsed.TotalSeconds) + " messages per second");
-//						totalReceived = 0;
-//					}
-//				}
-//
-//				await Task.Delay(TimeSpan.FromMinutes(5));
-//
-//				await newChannel2.Close();
-//			}
-//			catch (AggregateException ex)
-//			{
-//				Console.WriteLine("[Captured error] " + ex.Message);
-//			}
-//			catch (Exception ex)
-//			{
-//				Console.WriteLine("[Captured error 2] " + ex.Message);
-//			}
-//
-//			if (conn2 != null)
-//				conn2.Dispose();
-//		}
+		//		private static async Task StartConcurrentRpc()
+		//		{
+		//			Connection conn2 = null;
+		//			try
+		//			{
+		//				conn2 = await new ConnectionFactory().Connect(TargetHost,
+		//					vhost: VHost, username: _username, password: _password);
+		//
+		//				Console.WriteLine("[Connected]");
+		//
+		//				Console.WriteLine("Starting Rpc Parallel calls...");
+		//
+		//				var newChannel2 = await conn2.CreateChannel();
+		//				Console.WriteLine("[channel created] " + newChannel2.ChannelNumber);
+		//				await newChannel2.BasicQos(0, Prefetch, false);
+		//
+		//				var rpcHelper = await newChannel2.CreateRpcHelper(ConsumeMode.ParallelWithBufferCopy);
+		//
+		//				var watch = new Stopwatch();
+		//				watch.Start();
+		//
+		//				var totalReceived = 0;
+		//
+		//				
+		//				var tasks = new Task[ConcurrentCalls];
+		//
+		//				for (int i = 0; i < TotalPublish; i += ConcurrentCalls)
+		//				{
+		//					for (int j = 0; j < ConcurrentCalls; j++)
+		//					{
+		//						var t = MakeCall(rpcHelper, i + j);
+		//						tasks[j] = t;
+		//					}
+		//
+		//					Task.WaitAll(tasks);
+		//
+		//					totalReceived += ConcurrentCalls;
+		//
+		////					Console.WriteLine("calls " + totalReceived);
+		//
+		//					if (totalReceived >= TotalPublish)
+		//					{
+		//						watch.Stop();
+		//						Console.WriteLine("Rpc stress done. Took " +
+		//										  watch.Elapsed.TotalMilliseconds +
+		//										  "ms - rate of " + (TotalPublish / watch.Elapsed.TotalSeconds) + " messages per second");
+		//						totalReceived = 0;
+		//					}
+		//				}
+		//
+		//				await Task.Delay(TimeSpan.FromMinutes(5));
+		//
+		//				await newChannel2.Close();
+		//			}
+		//			catch (AggregateException ex)
+		//			{
+		//				Console.WriteLine("[Captured error] " + ex.Message);
+		//			}
+		//			catch (Exception ex)
+		//			{
+		//				Console.WriteLine("[Captured error 2] " + ex.Message);
+		//			}
+		//
+		//			if (conn2 != null)
+		//				conn2.Dispose();
+		//		}
 
 		private static async Task<int> MakeCall(RpcHelper rpcHelper, int y)
 		{
@@ -154,7 +155,7 @@
 				if (x != y) throw new Exception("Invalid result for call");
 			}
 
-//			Console.WriteLine("Call " + y + " completed");
+			//			Console.WriteLine("Call " + y + " completed");
 
 			return y;
 		}
@@ -187,14 +188,14 @@
 				Console.WriteLine("Starting Rpc channel consumer...");
 				await newChannel.BasicConsume(ConsumeMode.SingleThreaded, delivery =>
 				{
-//					if (delivery.stream != null)
+					//					if (delivery.stream != null)
 					delivery.stream.Read(temp, 0, delivery.bodySize);
 
 					var replyProp = newChannel.RentBasicProperties();
 					replyProp.CorrelationId = delivery.properties.CorrelationId;
 
-					newChannel.BasicPublishFast("", 
-						delivery.properties.ReplyTo, false, 
+					newChannel.BasicPublishFast("",
+						delivery.properties.ReplyTo, false,
 						replyProp, new ArraySegment<byte>(temp, 0, 4));
 
 					return Task.CompletedTask;
@@ -230,10 +231,10 @@
 					}
 				}
 
-//				watch = Stopwatch.StartNew();
-//				int totalReceived = 0;
+				//				watch = Stopwatch.StartNew();
+				//				int totalReceived = 0;
 
-//				Console.WriteLine("[subscribed to queue] " + sub);
+				//				Console.WriteLine("[subscribed to queue] " + sub);
 
 				await Task.Delay(TimeSpan.FromMinutes(5));
 
@@ -263,7 +264,7 @@
 				Console.WriteLine("[Connected]");
 
 				var newChannel = await conn.CreateChannel();
-//				var newChannel = await conn.CreateChannelWithPublishConfirmation();
+				//				var newChannel = await conn.CreateChannelWithPublishConfirmation();
 				Console.WriteLine("[channel created] " + newChannel.ChannelNumber);
 				await newChannel.BasicQos(0, Prefetch, false);
 
@@ -279,15 +280,15 @@
 				{
 					// DeliveryMode = 2,
 					Type = "type1",
-					
+
 				};
 				prop.Headers["serialization"] = 0;
 
 				newChannel.MessageUndeliveredHandler += (undelivered) =>
 				{
-					Console.WriteLine("\t(Ops, message not routed: " + 
-						undelivered.replyCode + " " + 
-						undelivered.replyText + " " + 
+					Console.WriteLine("\t(Ops, message not routed: " +
+						undelivered.replyCode + " " +
+						undelivered.replyText + " " +
 						undelivered.routingKey + ")");
 				};
 
@@ -304,7 +305,7 @@
 				}
 				watch.Stop();
 
-				Console.WriteLine(" BasicPublish stress. Took " + watch.Elapsed.TotalMilliseconds + 
+				Console.WriteLine(" BasicPublish stress. Took " + watch.Elapsed.TotalMilliseconds +
 								  "ms - rate of " + (TotalPublish / watch.Elapsed.TotalSeconds) + " message per second");
 
 				await Task.Delay(TimeSpan.FromMilliseconds(200));
@@ -313,8 +314,8 @@
 				var newChannel2 = await conn.CreateChannel();
 				Console.WriteLine("[channel created] " + newChannel2.ChannelNumber);
 				await newChannel2.BasicQos(0, Prefetch, false);
- 
-//				var temp = new byte[1000000];
+
+				//				var temp = new byte[1000000];
 
 				watch = Stopwatch.StartNew();
 				int totalReceived = 0;
@@ -334,14 +335,14 @@
 							newChannel2.BasicNAck(delivery.deliveryTag, false, false);
 					}
 
-//					var val = Interlocked.Increment(ref totalReceived);
+					//					var val = Interlocked.Increment(ref totalReceived);
 					var val = ++totalReceived;
 
 					if (val == TotalPublish)
 					{
 						watch.Stop();
-						Console.WriteLine("Consume stress. Took " + 
-										  watch.Elapsed.TotalMilliseconds + 
+						Console.WriteLine("Consume stress. Took " +
+										  watch.Elapsed.TotalMilliseconds +
 										  "ms - rate of " + (TotalPublish / watch.Elapsed.TotalSeconds) + " message per second");
 						totalReceived = 0;
 					}
@@ -409,7 +410,7 @@
 			var channel2 = conn2.CreateModel();
 			var tempQueue = channel2.QueueDeclare("", false, true, true, null);
 			var ev = new AutoResetEvent(false);
-			
+
 			// consumes replies
 			channel2.BasicConsume(tempQueue, !WithAcks, new OldStyleConsumer((deliveryTag, prop2, body) =>
 			{
@@ -469,7 +470,7 @@
 			var watch = Stopwatch.StartNew();
 			for (int i = 0; i < TotalPublish; i++)
 			{
-//				prop.Headers["serialization"] = i;
+				//				prop.Headers["serialization"] = i;
 				channel.BasicPublish("test_ex", "routing2", false, prop, MessageContent);
 			}
 			watch.Stop();
@@ -483,7 +484,7 @@
 			{
 				if (WithAcks)
 				{
-					if (totalReceived%2 == 0)
+					if (totalReceived % 2 == 0)
 						channel.BasicAck(deliveryTag, false);
 					else
 						channel.BasicNack(deliveryTag, false, false);
@@ -552,38 +553,43 @@
 			}, TaskCreationOptions.LongRunning);
 		}
 
-		class OldStyleConsumer : RabbitMQ.Client.IBasicConsumer 
+		class OldStyleConsumer : RabbitMQ.Client.IAsyncBasicConsumer
 		{
-			private readonly Action<ulong, RabbitMQ.Client.IBasicProperties, byte[]> _action;
+			private readonly Func<ulong, RabbitMQ.Client.IReadOnlyBasicProperties, byte[], Task> _func;
 
-			public OldStyleConsumer(Action<ulong, RabbitMQ.Client.IBasicProperties, byte[]> action)
+			public OldStyleConsumer(Func<ulong, RabbitMQ.Client.IReadOnlyBasicProperties, byte[], Task> func)
 			{
-				_action = action;
+				_func = func;
 			}
 
-			public void HandleBasicCancel(string consumerTag)
+			public Task HandleBasicCancelAsync(string consumerTag, CancellationToken cancellationToken = default)
 			{
+				return Task.CompletedTask;
 			}
 
-			public void HandleBasicCancelOk(string consumerTag)
+			public Task HandleBasicCancelOkAsync(string consumerTag, CancellationToken cancellationToken = default)
 			{
+				return Task.CompletedTask;
 			}
 
-			public void HandleBasicConsumeOk(string consumerTag)
+			public Task HandleBasicConsumeOkAsync(string consumerTag, CancellationToken cancellationToken = default)
 			{
+				return Task.CompletedTask;
 			}
 
-			public void HandleBasicDeliver(string consumerTag, ulong deliveryTag, bool redelivered, string exchange, string routingKey,
-				RabbitMQ.Client.IBasicProperties properties, byte[] body)
+			public Task HandleBasicDeliverAsync(string consumerTag, ulong deliveryTag, bool redelivered, string exchange, string routingKey,
+				RabbitMQ.Client.IReadOnlyBasicProperties properties, ReadOnlyMemory<byte> body, CancellationToken cancellationToken = default)
 			{
-				_action(deliveryTag, properties, body);
+				return _func(deliveryTag, properties, body.ToArray());
 			}
 
-			public void HandleModelShutdown(object model, RabbitMQ.Client.ShutdownEventArgs reason)
+			public Task HandleChannelShutdownAsync(object channel, ShutdownEventArgs reason)
 			{
+				return Task.CompletedTask;
 			}
 
-			public RabbitMQ.Client.IModel Model { get; private set; }
+			public RabbitMQ.Client.IChannel Channel { get; private set; }
+
 			public event EventHandler<RabbitMQ.Client.Events.ConsumerEventArgs> ConsumerCancelled;
 		}
 	}
